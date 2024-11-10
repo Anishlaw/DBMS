@@ -1,0 +1,160 @@
+-- Creating the Account Table
+CREATE TABLE Account (
+    acc_no INT PRIMARY KEY,
+    branch_name VARCHAR(50),
+    balance DECIMAL(10, 2) CHECK (balance >= 0),
+    FOREIGN KEY (branch_name) REFERENCES Branch(branch_name)
+);
+
+-- Creating the Branch Table
+CREATE TABLE Branch (
+    branch_name VARCHAR(50) PRIMARY KEY,
+    branch_city VARCHAR(50),
+    assets DECIMAL(15, 2) CHECK (assets >= 0)
+);
+
+-- Creating the Customer Table
+CREATE TABLE Customer (
+    cust_name VARCHAR(50) PRIMARY KEY,
+    cust_street VARCHAR(100),
+    cust_city VARCHAR(50)
+);
+
+-- Creating the Depositor Table
+CREATE TABLE Depositor (
+    cust_name VARCHAR(50),
+    acc_no INT,
+    PRIMARY KEY (cust_name, acc_no),
+    FOREIGN KEY (cust_name) REFERENCES Customer(cust_name),
+    FOREIGN KEY (acc_no) REFERENCES Account(acc_no)
+);
+
+-- Creating the Loan Table
+CREATE TABLE Loan (
+    loan_no INT PRIMARY KEY,
+    branch_name VARCHAR(50),
+    amount DECIMAL(10, 2) CHECK (amount > 0),
+    FOREIGN KEY (branch_name) REFERENCES Branch(branch_name)
+);
+
+-- Creating the Borrower Table
+CREATE TABLE Borrower (
+    cust_name VARCHAR(50),
+    loan_no INT,
+    PRIMARY KEY (cust_name, loan_no),
+    FOREIGN KEY (cust_name) REFERENCES Customer(cust_name),
+    FOREIGN KEY (loan_no) REFERENCES Loan(loan_no)
+);
+
+-- Inserting values into the Branch table
+INSERT INTO Branch (branch_name, branch_city, assets) VALUES
+('Akurdi', 'Pune', 5000000),
+('ShivajiNagar', 'Pune', 7000000),
+('VimanNagar', 'Pune', 8000000),
+('MG Road', 'Mumbai', 6000000);
+
+-- Inserting values into the Customer table
+INSERT INTO Customer (cust_name, cust_street, cust_city) VALUES
+('Rajesh Sharma', '12 MG Road', 'Pune'),
+('Priya Deshmukh', '45 FC Road', 'Mumbai'),
+('Anjali Patil', '78 JM Road', 'Pune'),
+('Vikram Singh', '101 Baner Road', 'Pune'),
+('Aditi Kulkarni', '202 DP Road', 'Mumbai');
+
+-- Inserting values into the Account table
+INSERT INTO Account (acc_no, branch_name, balance) VALUES
+(1001, 'Akurdi', 15000),
+(1002, 'ShivajiNagar', 30000),
+(1003, 'VimanNagar', 5000),
+(1004, 'Akurdi', 20000),
+(1005, 'MG Road', 25000);
+
+-- Inserting values into the Depositor table
+INSERT INTO Depositor (cust_name, acc_no) VALUES
+('Rajesh Sharma', 1001),
+('Anjali Patil', 1003),
+('Vikram Singh', 1004),
+('Priya Deshmukh', 1005);
+
+-- Inserting values into the Loan table
+INSERT INTO Loan (loan_no, branch_name, amount) VALUES
+(2001, 'Akurdi', 15000),
+(2002, 'ShivajiNagar', 25000),
+(2003, 'Akurdi', 13000),
+(2004, 'VimanNagar', 10000),
+(2005, 'MG Road', 50000);
+
+-- Inserting values into the Borrower table
+INSERT INTO Borrower (cust_name, loan_no) VALUES
+('Rajesh Sharma', 2001),
+('Priya Deshmukh', 2002),
+('Anjali Patil', 2003),
+('Aditi Kulkarni', 2004),
+('Vikram Singh', 2005);
+
+Q1. Find the names of all branches in loan relation.
+SELECT DISTINCT branch_name
+FROM loan;
+
+Q2. Find all loan numbers for loans made at Akurdi Branch with loan amount > 12000.
+SELECT loan_no
+FROM loan
+WHERE branch_name = 'Akurdi' AND amount > 12000;
+
+Q3. Find all customers who have a loan from bank. Find their names,loan_no and loan
+amount.
+SELECT b.cust_name, l.loan_no, l.amount
+FROM borrower b
+JOIN loan l ON b.loan_no = l.loan_no;
+
+Q4. List all customers in alphabetical order who have loan from Akurdi branch.
+SELECT b.cust_name
+FROM borrower b
+JOIN loan l ON b.loan_no = l.loan_no
+WHERE l.branch_name = 'Akurdi'
+ORDER BY b.cust_name;
+
+Q5. Find all customers who have an account or loan or both at bank.
+SELECT DISTINCT c.cust_name
+FROM customer c
+LEFT JOIN depositor d ON c.cust_name = d.cust_name
+LEFT JOIN borrower b ON c.cust_name = b.cust_name
+WHERE d.acc_no IS NOT NULL OR b.loan_no IS NOT NULL;
+.
+Q6. Find all customers who have both account and loan at bank.
+SELECT DISTINCT c.cust_name
+FROM customer c
+JOIN depositor d ON c.cust_name = d.cust_name
+JOIN borrower b ON c.cust_name = b.cust_name;
+
+Q7. Find all customer who have account but no loan at the bank.
+SELECT DISTINCT c.cust_name
+FROM customer c
+JOIN depositor d ON c.cust_name = d.cust_name
+LEFT JOIN borrower b ON c.cust_name = b.cust_name
+WHERE b.loan_no IS NULL;
+
+Q8. Find average account balance at Akurdi branch.
+SELECT AVG(a.balance) AS avg_balance
+FROM account a
+JOIN branch b ON a.branch_name = b.branch_name
+WHERE b.branch_name = 'Akurdi';
+
+Q9. Find the average account balance at each branch
+SELECT a.branch_name, AVG(a.balance) AS avg_balance
+FROM account a
+GROUP BY a.branch_name;
+
+Q10. Find no. of depositors at each branch.
+SELECT a.branch_name, COUNT(d.cust_name) AS num_depositors
+FROM account a
+JOIN depositor d ON a.acc_no = d.acc_no
+GROUP BY a.branch_name;
+
+Q11. Find the branches where average account balance > 12000.
+SELECT a.branch_name
+FROM account a
+GROUP BY a.branch_name
+HAVING AVG(a.balance) > 12000;
+
+
